@@ -34,15 +34,18 @@ def get_availability_for_hotels(
     Example:
     get_availability(townId='1234', checkin_date='2022-12-01', checkout_date='2022-12-05', adults=2, children=1)
     """
-    url = f'{os.getenv("CTS_API_V1")}/hotel/'
+    try:
+        url = f'{os.getenv("CTS_API_V1")}/hotel/'
 
-    ctsToken = os.getenv("CTS_TOKEN")
-    headers = {'Authorization': f'token {ctsToken}'}
-    currency = 1 if os.getenv('CURRENCY') == 'CLP' else 2
-    json = {'townId': townId, 'checkin': checkin_date, 'checkout': checkout_date, 'rooms': [{'adults': adults, 'children': children, 'infants': infants, 'ages': ages}], 'currency': currency}
-    response = requests.post(url, json=json, headers=headers)
-    result = generate_hotels_availability_response(response.json(), json)
-    return result
+        ctsToken = os.getenv("CTS_TOKEN")
+        headers = {'Authorization': f'token {ctsToken}'}
+        currency = 1 if os.getenv('CURRENCY') == 'CLP' else 2
+        json = {'townId': townId, 'checkin': checkin_date, 'checkout': checkout_date, 'rooms': [{'adults': adults, 'children': children, 'infants': infants, 'ages': ages}], 'currency': currency}
+        response = requests.post(url, json=json, headers=headers)
+        result = generate_hotels_availability_response(response.json(), json)
+        return result
+    except Exception as e:
+        return f'Error: {e}, in line {e.__traceback__.tb_lineno}'
 
 @tool
 def get_hotel_info(
