@@ -1,21 +1,27 @@
+# Usa una imagen base de Python 3.11
 FROM python:3.11-slim
 
-RUN pip install poetry==1.6.1
+# Instala Poetry
+RUN pip install poetry
 
-RUN poetry config virtualenvs.create false
+# Configura el directorio de trabajo dentro del contenedor
+WORKDIR /app
 
-WORKDIR /code
+# Copia los archivos de configuración de Poetry
+COPY pyproject.toml poetry.lock /app/
 
-COPY ./pyproject.toml ./README.md ./poetry.lock* ./
+# Instala las dependencias sin crear un entorno virtual dentro del contenedor
+RUN poetry config virtualenvs.create false && poetry install --no-root
 
-COPY ./package[s] ./packages
+# Copia el resto de la aplicación
+COPY . /app
 
-RUN poetry install  --no-interaction --no-ansi --no-root
+# Expone el puerto que usará la aplicación (8080 es el puerto predeterminado en Google Cloud Run)
+EXPOSE 8100
 
-COPY ./app ./app
+# Configura la variable de entorno PORT
+ENV PORT=8100
 
-RUN poetry install --no-interaction --no-ansi
+# Comando para iniciar la aplicación
+CMD ["python", "main.py"]
 
-EXPOSE 8080
-
-CMD exec uvicorn app.server:app --host 0.0.0.0 --port 8080
