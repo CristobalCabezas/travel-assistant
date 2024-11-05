@@ -9,6 +9,17 @@ from state import State
 from langchain_core.messages import ToolMessage, AIMessage
 from utilities import _print_event
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
+
+# Cargar las variables desde el archivo .env
+load_dotenv()
+
+# Ahora puedes acceder a las variables de entorno
+openai_api_key = os.getenv("OPENAI_API_KEY")
+
+# Usa la API key en tu aplicación
+
 
 # Crear la aplicación FastAPI
 app = FastAPI()
