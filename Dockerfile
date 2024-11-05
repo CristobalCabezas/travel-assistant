@@ -17,7 +17,7 @@ RUN poetry config virtualenvs.create false && poetry install --no-root
 COPY . /app
 
 # Copia el archivo .env al contenedor
-COPY .env /app/.env
+#COPY .env /app/.env
 
 # Expone el puerto que usará la aplicación (8100 en este caso)
 EXPOSE 8100
