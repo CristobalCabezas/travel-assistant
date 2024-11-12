@@ -1,5 +1,5 @@
 from langchain_openai import ChatOpenAI
-from langchain_core.pydantic_v1 import BaseModel
+from pydantic import BaseModel
 from langchain_core.runnables import Runnable, RunnableConfig
 from state import State
 from dotenv import load_dotenv
@@ -37,7 +37,7 @@ class CompleteOrEscalate(BaseModel):
     reason: str
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "cancel": True,
                 "reason": "User changed their mind about the current task.",

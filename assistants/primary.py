@@ -22,7 +22,7 @@ class ToHotelBookingAssistant(BaseModel):
     )
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "location": "Zurich",
                 "checkin_date": "2023-08-15",
@@ -43,7 +43,7 @@ class ToBookExcursion(BaseModel):
     )
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "location": "Lucerne",
                 "request": "The user is interested in outdoor activities and scenic views.",
