@@ -33,7 +33,7 @@ poetry run python main.py
 #### Install
 
 ```bash
-docker build -t travel-assistant
+docker build -t travel-assistant .
 ```
 
 #### Run
