@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, WebSocket
+from datetime import datetime
 from pydantic import BaseModel
 from langgraph.graph import StateGraph
 from graph import part_4_graph
@@ -48,34 +49,44 @@ async def chat(websocket: WebSocket):
     # Initialize the graph configuration for this session
     last_message = []
 
+    # Create log conversation log file
+    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    log_filename = f"logs/conversation_{thread_id}_{current_time}.log"
+    log_path = os.path.join(os.getcwd(), log_filename)
+
     try:
-        while True:
-            # Receive the user's message through the WebSocket
-            data = await websocket.receive_text()
-            json_data = json.loads(data)
-            message = json_data.get("message")
-            currency = json_data.get("currency")
-            os.environ["CURRENCY"] = currency
-            language = json_data.get("language")
-            os.environ["LANGUAGE"] = language
-            token = json_data.get("token")
-            os.environ["CTS_TOKEN"] = token
-            config = {"configurable": {"thread_id": thread_id, "language": language, "currency": currency}}
-            _printed = set()
-            try:
-                events = part_4_graph.stream(
-                    {"messages": [{"role": "user", "type": "text", "content": message}]}, config, stream_mode="values"
-                )
-                for event in events:
-                    _print_event(event, _printed)
-                    for message in event.get('messages', []):
-                        if isinstance(message, AIMessage) and message.content:
-                            if message.content not in last_message:
-                                await websocket.send_json(message.content)
-                                last_message.append(message.content)
-                #snapshot = part_4_graph.get_state(config)
-            except Exception as e:
-                await websocket.send_text(f"Error: {str(e)}")
+        with open(log_path, "a") as log_file:
+            while True:
+                # Receive the user's message through the WebSocket
+                data = await websocket.receive_text()
+                json_data = json.loads(data)
+                message = json_data.get("message")
+                currency = json_data.get("currency")
+                os.environ["CURRENCY"] = currency
+                language = json_data.get("language")
+                os.environ["LANGUAGE"] = language
+                token = json_data.get("token")
+                os.environ["CTS_TOKEN"] = token
+                config = {"configurable": {"thread_id": thread_id, "language": language, "currency": currency}}
+                _printed = set()
+                try:
+                    events = part_4_graph.stream(
+                        {"messages": [{"role": "user", "type": "text", "content": message}]}, config, stream_mode="values"
+                    )
+                    for event in events:
+                        print_event = _print_event(event, _printed)
+                        log_file.write(f"{print_event}\n\n")
+                        log_file.flush()
+                        for message in event.get('messages', []):
+                            if isinstance(message, AIMessage) and message.content:
+                                if message.content not in last_message:
+                                    await websocket.send_json(message.content)
+                                    last_message.append(message.content)
+                    #snapshot = part_4_graph.get_state(config)
+                except Exception as e:
+                    error_message = f"Error: {str(e)}"
+                    await websocket.send_text(error_message)
+                    log_file.write(f"{error_message}\n\n")
     except Exception as e:
         await websocket.close()
         raise HTTPException(status_code=500, detail=str(e))

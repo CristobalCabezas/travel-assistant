@@ -39,6 +39,7 @@ def _print_event(event: dict, _printed: set, max_length=1500):
                 msg_repr = msg_repr[:max_length] + " ... (truncated)"
             print(msg_repr)
             _printed.add(message.id)
+            return msg_repr
 
 
 def create_entry_node(assistant_name: str, new_dialog_state: str) -> Callable:
