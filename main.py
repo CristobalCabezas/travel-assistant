@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, WebSocket
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from datetime import datetime
 from pydantic import BaseModel
 from langgraph.graph import StateGraph
@@ -92,6 +92,8 @@ async def chat(websocket: WebSocket):
                     error_message = f"Error: {str(e)}"
                     await websocket.send_text(error_message)
                     log_file.write(f"{error_message}\n\n")
+    except WebSocketDisconnect:
+        print(f"WebSocket disconnected: {thread_id}")
     except Exception as e:
         await websocket.close()
         raise HTTPException(status_code=500, detail=str(e))
