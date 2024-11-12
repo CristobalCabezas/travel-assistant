@@ -12,28 +12,28 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 
-# Cargar las variables desde el archivo .env
+# Load the variables from the .env file
 load_dotenv()
 
-# Ahora puedes acceder a las variables de entorno
+# Now you can access the environment variables
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-# Usa la API key en tu aplicación
+# Use the API key in your application
 
 
-# Crear la aplicación FastAPI
+# Create the FastAPI application
 app = FastAPI()
 
-# Configurar CORS
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todas las fuentes
+    allow_origins=["*"],  # Allow all origins
     allow_credentials=True,
-    allow_methods=["*"],  # Permite todos los métodos (GET, POST, etc.)
-    allow_headers=["*"],  # Permite todos los encabezados
+    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allow all headers
 )
 
-# Inicializar el grafo de estados y otros recursos necesarios
+# Initialize the state graph and other necessary resources
 conversation_history = []
 sessions = {}
 
@@ -43,14 +43,14 @@ class Message(BaseModel):
 @app.websocket("/chat")
 async def chat(websocket: WebSocket):
     await websocket.accept()
-    # Crear un identificador único para cada sesión
+    # Create a unique identifier for each session
     thread_id = str(uuid.uuid4())
-    # Inicializar la configuración del grafo para esta sesión
+    # Initialize the graph configuration for this session
     last_message = []
 
     try:
         while True:
-            # Recibir el mensaje del usuario a través del WebSocket
+            # Receive the user's message through the WebSocket
             data = await websocket.receive_text()
             json_data = json.loads(data)
             message = json_data.get("message")

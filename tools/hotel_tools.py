@@ -224,12 +224,21 @@ def get_town_id_for_hotels(townName: str) -> List[Dict]:
 
     # Set townName to uppercase and replace written accents
     townName = townName.upper().replace('Á', 'A').replace('É', 'E').replace('Í', 'I').replace('Ó', 'O').replace('Ú', 'U')
-
-    url = f'https://apibooking.ctsturismo.com/api/city/dtt/?q={townName}'
+    
+    url = f'https://apibooking.ctsturismo.com/api/city/dtt/?q='
     ctsToken = os.getenv("CTS_TOKEN")
     headers = {'Authorization': f'token {ctsToken}'}
     response = requests.get(url, headers=headers)
-    return response.json()[0]['dtt_id']
+
+    result = 'We could not find the town you are looking for, but here is a list of towns available. '
+    result += 'Select the town you are looking for and use the town ID to search for hotels availability.\n\n'
+    result += 'Town ID\t|\tTown Name\n'
+    for town in response.json():
+        result += f"{town['dtt_id']}\t|\t{town['display_name']}\n"
+        dttTownName = town['display_name'].upper().replace('Á', 'A').replace('É', 'E').replace('Í', 'I').replace('Ó', 'O').replace('Ú', 'U')
+        if dttTownName == townName:
+            return town['dtt_id']
+    return result
 
 @tool
 def create_hotel_booking(
@@ -434,10 +443,12 @@ def create_hotel_booking(
         response = requests.post(url, headers=headers, json=payload).json()
 
         if response:
+            if response.get("errors"):
+                return f'Error: {response["errors"]}'
             booking_id = response['file_number']
             slug = response['slug']
             booking_link = os.getenv("FRONT_HOST") + f'/bookings/{slug}'
-            return f'Se ha realizado la reserva con éxito. El número de reserva es {booking_id}. Puede ver los detalles de la reserva en el siguiente enlace: {booking_link}'
+            return f'The booking has been successfully created. The booking number is {booking_id}. You can view the booking details at the following link: {booking_link}'
         else:
             print("Empty response received")
             return "Error: Empty response received from the server"
@@ -512,9 +523,10 @@ def cancel_hotel_booking(bookingId: str) -> List[Dict]:
         ctsToken = os.getenv("CTS_TOKEN")
         headers = {'Authorization': f'token {ctsToken}'}
         json = {'file_number': bookingId}
-        response = requests.post(url, json=json, headers=headers)
+        response = requests.post(url, json=json, headers=headers).json()
         if response:
-            return f'La reserva con el número {bookingId} ha sido cancelada con éxito.'
+            slug = response['slug']
+            return f'La reserva con el número {bookingId} ha sido cancelada con éxito. Puede consultar el estado de la reserva en el siguiente enlace: {os.getenv("FRONT_HOST")}/bookings/{slug}'
         else:
             return 'No se ha podido cancelar la reserva.'
     except Exception as e:

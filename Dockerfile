@@ -1,31 +1,31 @@
-# Usa una imagen base de Python 3.11 slim
+# Use a Python 3.11 slim base image
 FROM python:3.11-slim
 
-# Instala Poetry
+# Install Poetry
 RUN pip install poetry
 
-# Configura el directorio de trabajo
+# Set the working directory
 WORKDIR /app
 
-# Copia los archivos de configuración de Poetry
+# Copy Poetry configuration files
 COPY pyproject.toml poetry.lock /app/
 
-# Instala las dependencias sin crear un entorno virtual dentro del contenedor
+# Install dependencies without creating a virtual environment inside the container
 RUN poetry config virtualenvs.create false && poetry install --no-root
 
-# Copia el resto de la aplicación al contenedor
+# Copy the rest of the application to the container
 COPY . /app
 
-# Copia el archivo .env
+# Copy the .env file
 #COPY .env /app/.env
 
-# Expone el puerto que usará la aplicación
+# Expose the port that the application will use
 EXPOSE 8100
 
-# Configura la variable de entorno PORT
+# Set the PORT environment variable
 ENV PORT=8100
 
-# Comando para iniciar la aplicación
+# Command to start the application
 CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8100"]
 
 

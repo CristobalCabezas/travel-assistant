@@ -61,11 +61,14 @@ def get_town_id_for_transport_and_excursions(townName: str) -> list[dict]:
     headers = {'Authorization': f'token {ctsToken}'}
     response = requests.get(url, headers=headers)
 
+    result = 'We could not find the town you are looking for, but here is a list of towns available. '
+    result += 'Select the town you are looking for and use the town ID to search for the availability of transport or excursions.\n\n'
+    result += 'Town ID\t|\tTown Name\n'
     for town in response.json():
+        result += f"{town['id']}\t|\t{town['name']}\n"
         if town['name'].lower() == townName.lower():
             return town['id']
-
-    return None
+    return result
 
 @tool
 def get_excursion_or_transfer_description(
@@ -349,8 +352,8 @@ def generate_excursion_or_transfer_description_response(description, service):
     result += f"Description (English): {description['descriptions']['d_text_en']}\n"
     result += f'(Use the description name and description acording to the language used by the user. If you are not sure, just translate to the related language)\n'
     result += f"Includes: {', '.join(description['concepts'])}\n"
-    result += f"City: {description['city']}\n\n"
-    result += f'(Also, if necesary, translate the labels to the language used by the user)\n'
+    result += f"City: {description['city']}\n"
+    result += f'(Also, if necesary, translate the labels to the language used by the user)\n\n'
     return result
 
 def get_data_for_excursion_or_transfer_booking(
