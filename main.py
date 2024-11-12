@@ -10,6 +10,7 @@ from state import State
 from langchain_core.messages import ToolMessage, AIMessage
 from utilities import _print_event
 from fastapi.middleware.cors import CORSMiddleware
+from google.cloud import storage
 from dotenv import load_dotenv
 
 
@@ -37,6 +38,10 @@ app.add_middleware(
 # Initialize the state graph and other necessary resources
 conversation_history = []
 sessions = {}
+
+# Configure the Google Cloud Storage client
+storage_client = storage.Client() if os.getenv("ENABLE_STORAGE_LOGS") == "True" else None
+bucket_name = "travel-assistant-logs"
 
 class Message(BaseModel):
     content: str
@@ -90,6 +95,19 @@ async def chat(websocket: WebSocket):
     except Exception as e:
         await websocket.close()
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        try:
+            if storage_client:
+                bucket = storage_client.bucket(bucket_name)
+                blob = bucket.blob(log_filename)
+                blob.upload_from_filename(log_path)
+
+                # Delete the local file after uploading it to the bucket
+                if os.path.exists(log_path):
+                    os.remove(log_path)
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error uploading log to Cloud Storage: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

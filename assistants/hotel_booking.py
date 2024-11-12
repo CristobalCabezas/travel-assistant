@@ -1,10 +1,10 @@
 #mport __init__
 from assistants.assistant import CompleteOrEscalate
 from langchain_core.prompts import ChatPromptTemplate
-from tools.hotel_tools import get_availability_for_hotels, get_town_id_for_hotels, get_hotel_info, get_hotel_rooms_available, create_hotel_booking, update_hotel_booking, cancel_hotel_booking
 from datetime import datetime
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
+import tools.hotel_tools as tools
 import os
 load_dotenv()
 
@@ -78,7 +78,7 @@ book_hotel_prompt = ChatPromptTemplate.from_messages(
     ]
 ).partial(time=datetime.now(), language=os.getenv("LANGUAGE"), currency=os.getenv("CURRENCY"))
 
-book_hotel_safe_tools = [get_availability_for_hotels, get_town_id_for_hotels, get_hotel_info, get_hotel_rooms_available, create_hotel_booking, update_hotel_booking, cancel_hotel_booking]
+book_hotel_safe_tools = [tools.get_availability_for_hotels, tools.get_town_id_for_hotels, tools.get_hotel_info, tools.get_hotel_rooms_available, tools.create_hotel_booking, tools.update_hotel_booking, tools.cancel_hotel_booking]
 book_hotel_sensitive_tools = []
 book_hotel_tools = book_hotel_safe_tools + book_hotel_sensitive_tools
 book_hotel_runnable = book_hotel_prompt | llm.bind_tools(

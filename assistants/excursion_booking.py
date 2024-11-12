@@ -1,10 +1,9 @@
-#import __init__
 from assistants.assistant import CompleteOrEscalate
 from langchain_core.prompts import ChatPromptTemplate
-from tools.excursion_tools import get_availability_for_transfer_and_excursions, get_town_id_for_transport_and_excursions, create_transport_or_excursion_booking, update_transport_or_excursion_booking, cancel_transport_or_excursion_booking, get_excursion_or_transfer_description, get_excursion_or_transfer_options_avilable
 from datetime import datetime
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
+import tools.excursion_tools as tools
 load_dotenv()
 
 llm = ChatOpenAI(model="gpt-4o", temperature=0)
@@ -71,8 +70,8 @@ book_excursion_prompt = ChatPromptTemplate.from_messages(
     ]
 ).partial(time=datetime.now())
 
-book_excursion_safe_tools = [get_availability_for_transfer_and_excursions, get_town_id_for_transport_and_excursions, get_excursion_or_transfer_description, get_excursion_or_transfer_options_avilable, create_transport_or_excursion_booking, cancel_transport_or_excursion_booking]
-book_excursion_sensitive_tools = [update_transport_or_excursion_booking]
+book_excursion_safe_tools = [tools.get_availability_for_transfer_and_excursions, tools.get_town_id_for_transport_and_excursions, tools.get_excursion_or_transfer_description, tools.get_excursion_or_transfer_options_avilable, tools.create_transport_or_excursion_booking, tools.cancel_transport_or_excursion_booking]
+book_excursion_sensitive_tools = []
 book_excursion_tools = book_excursion_safe_tools + book_excursion_sensitive_tools
 book_excursion_runnable = book_excursion_prompt | llm.bind_tools(
     book_excursion_tools + [CompleteOrEscalate]
