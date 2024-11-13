@@ -48,7 +48,7 @@ def generate_transfer_availability_response(transfers, date, adults, children, t
             result += f"Type of service: {'Shared' if isRegular[0] else 'Private'}\n"
         else:
             result += f"Type of service: Shared and Private\n"
-        result += f"See details: {os.getenv('FRONT_HOST')}/results/transfer/{transfer['id']}?desde={date}&hasta={date}&adults={adults}&children={children}&infants={infants}&pax={adults}&townName={transfer['city'].title()}&townId={townId}&serviceType=1\n\n"
+        result += f"See details: {os.getenv('FRONT_HOST')}/travel-assistant/transfer/{transfer['id']}?desde={date}&hasta={date}&adults={adults}&children={children}&infants={infants}&pax={adults}&townName={transfer['city'].title()}&townId={townId}&serviceType=1\n\n"
         i += 1
     return result
 
