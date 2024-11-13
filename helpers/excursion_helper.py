@@ -1,7 +1,7 @@
 import requests
 import os
 
-def generate_excursion_availability_response(excursions):
+def generate_excursion_availability_response(excursions, date, adults, children, townId, infants=0):
     result = 'The excursions available are the following:\n\n'
     i = 1
     for excursion in excursions:
@@ -20,14 +20,15 @@ def generate_excursion_availability_response(excursions):
             isRegular.append(service['is_regular'])
         isRegular = list(set(isRegular))
         if len(isRegular) == 1:
-            result += f"Type of service: {'Shared' if isRegular[0] else 'Private'}\n\n"
+            result += f"Type of service: {'Shared' if isRegular[0] else 'Private'}\n"
         else:
-            result += f"Type of service: Shared and Private\n\n"
+            result += f"Type of service: Shared and Private\n"
+        result += f"See details: {os.getenv('FRONT_HOST')}/travel-assistant/services/{excursion['id']}?desde={date}&hasta={date}&adults={adults}&children={children}&infants={infants}&pax={adults}&townName={excursion['city'].title()}&townId={townId}&serviceType=2\n\n"
         i += 1
     return result
 
 
-def generate_transfer_availability_response(transfers):
+def generate_transfer_availability_response(transfers, date, adults, children, townId, infants=0):
     result = 'The excursions available are the following:\n\n'
     i = 1
     for transfer in transfers:
@@ -44,9 +45,10 @@ def generate_transfer_availability_response(transfers):
             isRegular.append(service['is_regular'])
         isRegular = list(set(isRegular))
         if len(isRegular) == 1:
-            result += f"Type of service: {'Shared' if isRegular[0] else 'Private'}\n\n"
+            result += f"Type of service: {'Shared' if isRegular[0] else 'Private'}\n"
         else:
-            result += f"Type of service: Shared and Private\n\n"
+            result += f"Type of service: Shared and Private\n"
+        result += f"See details: {os.getenv('FRONT_HOST')}/results/transfer/{transfer['id']}?desde={date}&hasta={date}&adults={adults}&children={children}&infants={infants}&pax={adults}&townName={transfer['city'].title()}&townId={townId}&serviceType=1\n\n"
         i += 1
     return result
 

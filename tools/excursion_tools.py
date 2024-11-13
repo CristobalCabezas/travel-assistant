@@ -37,9 +37,9 @@ def get_availability_for_transfer_and_excursions(
     response = requests.get(url, headers=headers)
 
     if tipos == 1:
-        result = helper.generate_transfer_availability_response(response.json())
+        result = helper.generate_transfer_availability_response(response.json(), fecha, adults, children, townId)
     if tipos == 2:
-        result = helper.generate_excursion_availability_response(response.json())
+        result = helper.generate_excursion_availability_response(response.json(), fecha, adults, children, townId)
     return result
 
 @tool

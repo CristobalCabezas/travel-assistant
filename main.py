@@ -56,7 +56,7 @@ async def chat(websocket: WebSocket):
 
     # Create log conversation log file
     current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    log_filename = f"logs/conversation_{thread_id}_{current_time}.log"
+    log_filename = f"logs/{current_time}_conversation_{thread_id}.log"
     log_path = os.path.join(os.getcwd(), log_filename)
 
     try:
