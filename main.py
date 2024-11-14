@@ -8,7 +8,7 @@ import json
 import os
 from state import State
 from langchain_core.messages import ToolMessage, AIMessage
-from utilities import _print_event
+from utilities import _print_event, print_action
 from fastapi.middleware.cors import CORSMiddleware
 from google.cloud import storage
 from dotenv import load_dotenv
@@ -80,14 +80,65 @@ async def chat(websocket: WebSocket):
                     )
                     for event in events:
                         print_event = _print_event(event, _printed)
-                        log_file.write(f"{print_event}\n\n")
+                        log_file.write(f"{print_event}\n")
                         log_file.flush()
                         for message in event.get('messages', []):
                             if isinstance(message, AIMessage) and message.content:
-                                if message.content not in last_message:
-                                    await websocket.send_json(message.content)
-                                    last_message.append(message.content)
-                    #snapshot = part_4_graph.get_state(config)
+                                response = {"type": "text", "content": message.content}
+                                if response not in last_message:
+                                    await websocket.send_json(response)
+                                    last_message.append(response)
+                    snapshot = part_4_graph.get_state(config)
+                    while snapshot.next:
+                        # Inform the frontend about the interruption and the need for user approval
+                        content_english = "You are about do an action on your booking request. Are you sure you want to continue?"
+                        content_spanish = "Estás a punto de realizar una acción sobre tu reserva ¿Estás seguro que deseas continuar?"
+                        content = content_spanish if language == "Spanish" else content_english
+                        print_event = print_action("Approval Needed", content)
+                        log_file.write(f"{print_event}\n\n")
+                        log_file.flush()
+                        await websocket.send_json({
+                            "type": "approval_needed",
+                            "content": content,
+                        })
+
+                        # Wait for the user's response from the frontend
+                        data = await websocket.receive_text()
+                        json_data = json.loads(data)
+                        user_input = json_data.get("message")
+                        print_event = print_action("User Input", user_input)
+                        log_file.write(f"{print_event}\n")
+                        log_file.flush()
+                        correct_answer = "si" if language == "Spanish" else "yes"
+
+                        if user_input.lower() == correct_answer:
+                            # Continue without changes
+                            result = part_4_graph.invoke(None, config)
+                        else:
+                            # Process the new instruction provided by the user
+                            result = part_4_graph.invoke(
+                                {
+                                    "messages": [
+                                        ToolMessage(
+                                            tool_call_id=snapshot.values["messages"][-1].tool_calls[0]["id"],
+                                            content=f"API call denied by user. Reasoning: '{user_input}'. Continue assisting, accounting for the user's input.",
+                                        )
+                                    ]
+                                },
+                                config,
+                            )
+                        print_event = _print_event(result, _printed)
+                        log_file.write(f"{print_event}\n\n")
+                        log_file.flush()
+                        # Update the snapshot to continue checking for more steps
+                        snapshot = part_4_graph.get_state(config)
+                        # Return the response to the user
+                        for message in snapshot.values['messages']:
+                            if isinstance(message, AIMessage) and message.content:
+                                response = {"type": "text", "content": message.content}
+                                if response not in last_message:
+                                    await websocket.send_json(response)
+                                    last_message.append(response)
                 except Exception as e:
                     error_message = f"Error: {str(e)}"
                     await websocket.send_text(error_message)

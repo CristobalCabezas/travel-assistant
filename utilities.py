@@ -41,6 +41,11 @@ def _print_event(event: dict, _printed: set, max_length=1500):
             _printed.add(message.id)
             return msg_repr
 
+def print_action(action: str, content: str):
+    msg_repr = (f"\n================================== {action} ==================================\n")
+    msg_repr += f"{content}\n"
+    print(msg_repr)
+    return msg_repr
 
 def create_entry_node(assistant_name: str, new_dialog_state: str) -> Callable:
     def entry_node(state: State) -> dict:
