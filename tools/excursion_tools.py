@@ -72,7 +72,7 @@ def get_town_id_for_transport_and_excursions(townName: str) -> list[dict]:
 
 @tool
 def get_excursion_or_transfer_description(
-    serviceNumber: int,
+    serviceId: int,
     townId: int,
     tipos: int,
     date: str,
@@ -83,7 +83,7 @@ def get_excursion_or_transfer_description(
     Get the information of the excursion or transfer.
 
     Args:
-    serviceNumber: The service number.
+    serviceId: The service Id.
     townId: The town ID.
     tipos: The type of service. 1 is for transfer, and 2 is for excursions.
     date (string): The date (format YYYY-MM-DD).
@@ -96,25 +96,29 @@ def get_excursion_or_transfer_description(
     headers = { 'Authorization': f'token {ctsToken}' }
     response = requests.get(url, headers = headers).json()
 
+    for service in response:
+        if service['id'] == serviceId:
+            serviceOptions = service
+            break
     service = 'excursion' if tipos == 2 else 'transfer'
-    result = helper.generate_excursion_or_transfer_description_response(response[serviceNumber-1], service)
+    result = helper.generate_excursion_or_transfer_description_response(serviceOptions, service)
 
     return result
 
 @tool
 def get_excursion_or_transfer_options_avilable(
-    serviceNumber: int,
+    serviceId: int,
     townId: int,
     tipos: int,
     date: str,
     adults: int,
-    children: int
+    children: int = 0
 )->list [dict]:
     """
     Get the options for excursions or transfers.
 
     Args:
-    serviceNumber: The service number.
+    serviceId: The service Id. It does not correspond to the service code, so do not confuse them.
     townId: The town ID.
     tipos: The type of service. 1 is for transfer, and 2 is for excursions.
     fecha (string): The date (format YYYY-MM-DD).
@@ -133,15 +137,19 @@ def get_excursion_or_transfer_options_avilable(
     ctsToken = os.getenv("CTS_TOKEN")
     headers = { 'Authorization': f'token {ctsToken}' }
     response = requests.get(url, headers = headers).json()
-
+    # extract the service object from response['id']
+    for service in response:
+        if service['id'] == serviceId:
+            serviceOptions = service
+            break
     service = 'excursion' if tipos == 2 else 'transfer'
-    result = helper.generate_excursion_or_transfer_options_response(response[serviceNumber-1], service)
+    result = helper.generate_excursion_or_transfer_options_response(serviceOptions, service)
 
     return result
 
 @tool
 def create_transport_or_excursion_booking(
-    serviceNumber: int,
+    serviceId: int,
     serviceCode: int,
     townId: int,
     tipos: int,
@@ -163,7 +171,7 @@ def create_transport_or_excursion_booking(
     Create a transport or excursion booking.
 
     Args:
-    serviceNumber: The service number.
+    serviceId: The service Id.
     serviceCode: The service code.
     townId: The town ID.
     tipos: The type of service. 1 is for transfer, and 2 is for excursions.
@@ -187,51 +195,53 @@ def create_transport_or_excursion_booking(
     Example:
     create_transport_or_excursion_booking()
     """
+    try:
+        currency = 1 if os.getenv("CURRENCY") == 'CLP' else 2
+        serviceAvailability = helper.get_data_for_excursion_or_transfer_booking(serviceId=serviceId, serviceCode=serviceCode, townId=townId, tipos=tipos, travelDate=travelDate, adults=adults, children=children)
+        serviceCode = serviceAvailability['service_code']
+        adults = serviceAvailability['adults']
+        children = serviceAvailability['children']
+        salePrice = serviceAvailability['sale_price']
+        # Get the language from serviceAvailability['language'] (array) where equals to language
+        for serviceLanguage in serviceAvailability['language']:
+            if serviceLanguage == language:
+                language = serviceLanguage
+                break
+        travelDate = serviceAvailability['travel_date']
 
-    currency = 1 if os.getenv("CURRENCY") == 'CLP' else 2
-    serviceAvailability = helper.get_data_for_excursion_or_transfer_booking(serviceNumber=serviceNumber, serviceCode=serviceCode, townId=townId, tipos=tipos, travelDate=travelDate, adults=adults, children=children)
-    serviceCode = serviceAvailability['service_code']
-    adults = serviceAvailability['adults']
-    children = serviceAvailability['children']
-    salePrice = serviceAvailability['sale_price']
-    # Get the language from serviceAvailability['language'] (array) where equals to language
-    for serviceLanguage in serviceAvailability['language']:
-        if serviceLanguage == language:
-            language = serviceLanguage
-            break
-    travelDate = serviceAvailability['travel_date']
-
-    payload = {
-        "passenger": {
-            "name": firstName,
-            "last_name": lastName,
-            "country": country,
-            "email": email,
-            "passport_or_dni": passportOrDni,
-            "phone": phone
-        },
-        "notes": notes,
-        "reference_number": referenceNumber,
-        "currency": currency,
-        "services": [
-            {
-                "service_code": serviceCode,
-                "adults": adults,
-                "children": children,
-                "sale_price": salePrice,
-                "language": language,
-                "travel_date": travelDate,
-                "flight_number": flightNumber,
-                "notes": notes
-            }
-        ],
-    }
-    url = f'{os.getenv("CTS_API_V2")}/booking/'
-    ctsToken = os.getenv("CTS_TOKEN")
-    headers = {'Authorization': f'token {ctsToken}'}
-    response = requests.post(url, json=payload, headers=headers).json()
-    bookingId = response['booking_id']
-    return f"Se ha realizado la reserva con éxito. El número de reserva es {bookingId}"
+        payload = {
+            "passenger": {
+                "name": firstName,
+                "last_name": lastName,
+                "country": country,
+                "email": email,
+                "passport_or_dni": passportOrDni,
+                "phone": phone
+            },
+            "notes": notes,
+            "reference_number": referenceNumber,
+            "currency": currency,
+            "services": [
+                {
+                    "service_code": serviceCode,
+                    "adults": adults,
+                    "children": children,
+                    "sale_price": salePrice,
+                    "language": language,
+                    "travel_date": travelDate,
+                    "flight_number": flightNumber,
+                    "notes": notes
+                }
+            ],
+        }
+        url = f'{os.getenv("CTS_API_V2")}/booking/'
+        ctsToken = os.getenv("CTS_TOKEN")
+        headers = {'Authorization': f'token {ctsToken}'}
+        response = requests.post(url, json=payload, headers=headers).json()
+        bookingId = response['booking_id']
+        return f"Se ha realizado la reserva con éxito. El número de reserva es {bookingId}"
+    except Exception as e:
+        return f"No se ha podido realizar la reserva. {e}"
 
 #TODO
 # @tool

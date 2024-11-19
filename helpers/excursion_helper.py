@@ -82,7 +82,7 @@ def generate_excursion_or_transfer_description_response(description, service):
     return result
 
 def get_data_for_excursion_or_transfer_booking(
-    serviceNumber: int,
+    serviceId: int,
     serviceCode: int,
     townId: str,
     tipos: int,
@@ -94,7 +94,7 @@ def get_data_for_excursion_or_transfer_booking(
     Get the data for a transport or excursion booking.
 
     Args:
-    serviceNumber: The service number.
+    serviceId: The service Id.
     serviceCode: The service code.
     townId: The town ID.
     tipos: The type of service. 1 is for transfer, and 2 is for excursions.
@@ -111,6 +111,9 @@ def get_data_for_excursion_or_transfer_booking(
     ctsToken = os.getenv("CTS_TOKEN")
     headers = {'Authorization': f'token {ctsToken}'}
     response = requests.get(url, headers=headers).json()
-    services = response[serviceNumber-1]
+    for services in response:
+        if services['id'] == serviceId:
+            services = services
+            break
     result = next((service for service in services['services'] if service['service_code'] == serviceCode), None)
     return result
