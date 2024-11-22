@@ -34,14 +34,7 @@ book_hotel_prompt = ChatPromptTemplate.from_messages(
             "you have to show the hotels that match the user's preferences. "
             "You can filter the hotels by category, stars, price, location/adress, category, ammenities and other features. "
             "If you are not sure what to show, you can ask to user one of those filter options, but only if the user requested and additional information.\n\n"
-            "2. When user is interested in a hotel option, show the hotel information.\n"
-            "You have two options:\n"
-            "\ta) If the user wants to know more information about a specific hotel, use the 'get_hotel_info' tool. "
-            "You can use the 'get_hotel_info' tool to get the hotel information available for the hotel id. "
-            "Use it especially when the user asks, for example: 'give me more information about this hotel', "
-            "'what are the services of this hotel', "
-            "or 'what can you tell me about this hotel'. "
-            "\tb) Show the rooms available for that hotel. "
+            "2. When user is interested in a hotel option, show the rooms available for that hotel. "
             "Use the 'get_hotel_rooms_available' tool to get the rooms available for the hotel id. "
             "This option is necessary to book a hotel, so always have to use this option before booking a hotel. "
             "If you are not sure what of the two options to use, you can ask to user in order to choose one option. "
@@ -73,7 +66,6 @@ book_hotel_prompt = ChatPromptTemplate.from_messages(
             " - 'I want to book a hotel/excursion/transfer'\n"
             " - 'nevermind i think I'll book separately'\n"
             " - 'i need to figure out transportation while i'm there'\n"
-            #" - 'Oh wait i haven't booked my flight yet i'll do that first'\n"
             " - 'Hotel booking confirmed'",
         ),
         ("placeholder", "{messages}"),
